@@ -3,7 +3,7 @@ import {useState} from './useState';
 
 describe('useState', () => {
   it('should set initial state', () => {
-    const [count, setCount] = useState(8);
+    const [count] = useState(8);
     expect(count()).toBe(8);
   });
 
