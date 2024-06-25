@@ -1,5 +1,5 @@
 import {describe, it, expect} from '@jest/globals';
-import {useState} from './useState';
+import useState from './useState';
 
 describe('useState', () => {
   it('should set initial state', () => {

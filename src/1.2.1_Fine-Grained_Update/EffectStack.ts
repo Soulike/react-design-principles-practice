@@ -1,13 +1,13 @@
-import {IEffect} from './useEffect';
+import {Effect} from './useEffect';
 
 class EffectStack {
-  private readonly stack: IEffect[];
+  private readonly stack: Effect[];
 
   constructor() {
     this.stack = [];
   }
 
-  public push(effect: IEffect) {
+  public push(effect: Effect) {
     this.stack.push(effect);
   }
 
@@ -15,11 +15,9 @@ class EffectStack {
     this.stack.pop();
   }
 
-  public getCurrent(): IEffect | null {
+  public getCurrent(): Effect | null {
     return this.stack[this.stack.length - 1] ?? null;
   }
 }
 
-const effectStack = new EffectStack();
-
-export {effectStack};
+export default new EffectStack();

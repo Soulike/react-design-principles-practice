@@ -1,6 +1,6 @@
 import {describe, it, expect, jest} from '@jest/globals';
-import {useState} from './useState';
-import {useEffect} from './useEffect';
+import useState from './useState';
+import useEffect from './useEffect';
 
 describe('useEffect', () => {
   it('should call callback with dependencies', () => {
@@ -22,6 +22,11 @@ describe('useEffect', () => {
     setCount(2);
     expect(currentCount).toBe(2);
     expect(callback1).toBeCalledTimes(2);
+    expect(callback2).toBeCalledTimes(1);
+
+    setCount(5);
+    expect(currentCount).toBe(5);
+    expect(callback1).toBeCalledTimes(3);
     expect(callback2).toBeCalledTimes(1);
   });
 

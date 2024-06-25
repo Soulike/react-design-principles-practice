@@ -1,39 +1,51 @@
-import {IEffect} from './useEffect';
-import {effectStack} from './EffectStack';
+import {Effect} from './useEffect';
+import effectStack from './EffectStack';
 
 type Getter<T> = () => T;
 type Setter<T> = (newValue: T) => void;
 
-export type SubscribingEffects = Set<IEffect>;
+export class State<T> {
+  private currentValue: T;
+  private readonly subscriberEffects: Set<Effect>;
 
-export function useState<T>(): [Getter<T | undefined>, Setter<T>];
-export function useState<T>(initValue: T): [Getter<T>, Setter<T>];
+  constructor(initValue: T) {
+    this.currentValue = initValue;
+    this.subscriberEffects = new Set();
+  }
 
-export function useState<T>(initValue?: T): [Getter<T | undefined>, Setter<T>] {
-  let value = initValue;
-  const subscribingEffects: Set<IEffect> = new Set();
-
-  const getter: Getter<typeof initValue> = () => {
+  public getter: Getter<T> = () => {
     const currentEffect = effectStack.getCurrent();
     if (currentEffect) {
-      subscribe(currentEffect, subscribingEffects);
+      this.addSubscriberEffect(currentEffect);
     }
-    return value;
+    return this.currentValue;
   };
-  const setter: Setter<T> = (newValue: T) => {
-    value = newValue;
+
+  public setter: Setter<T> = (newValue: T) => {
+    this.currentValue = newValue;
     // Since effect.execute() will call effect callback, which further calls getter
     // modifying subscribingEffects, so we use a copy here
-    const subscribingEffectsCopy = Array.from(subscribingEffects);
-    for (const effect of subscribingEffectsCopy) {
+    const subscriberEffectsCopy = Array.from(this.subscriberEffects);
+    for (const effect of subscriberEffectsCopy) {
       effect.execute();
     }
   };
 
-  return [getter, setter];
+  public addSubscriberEffect(effect: Effect) {
+    this.subscriberEffects.add(effect);
+    effect.dependingStates.add(this);
+  }
+
+  public removeSubscriberEffect(effect: Effect) {
+    this.subscriberEffects.delete(effect);
+    effect.dependingStates.delete(this);
+  }
 }
 
-function subscribe(effect: IEffect, subscribingEffects: SubscribingEffects) {
-  subscribingEffects.add(effect);
-  effect.deps.add(subscribingEffects);
+export default function useState<T>(): [Getter<T | undefined>, Setter<T>];
+export default function useState<T>(initValue: T): [Getter<T>, Setter<T>];
+
+export default function useState<T>(initValue?: T): [Getter<T | undefined>, Setter<T>] {
+  const state = new State(initValue);
+  return [state.getter, state.setter];
 }

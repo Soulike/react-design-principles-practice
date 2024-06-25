@@ -1,37 +1,40 @@
-import {SubscribingEffects} from './useState';
-import {effectStack} from './EffectStack';
+import {State} from './useState';
+import effectStack from './EffectStack';
 
 type EffectCallBack = () => void;
 
-export interface IEffect {
-  execute: EffectCallBack;
-  deps: Set<SubscribingEffects>;
-}
+export class Effect {
+  public readonly callback: EffectCallBack;
+  public readonly dependingStates: Set<State<any>>;
 
-export function useEffect(callback: EffectCallBack) {
-  const execute = () => {
-    cleanUp(effect);
-    effectStack.push(effect);
+  constructor(callback: EffectCallBack) {
+    this.callback = callback;
+    this.dependingStates = new Set();
+  }
+
+  public execute() {
+    // Dependencies will be restored in state getters
+    this.clearDependingStates();
+    // Mark as current effect
+    effectStack.push(this);
 
     try {
-      callback();
+      this.callback();
     } finally {
       effectStack.pop();
     }
-  };
-
-  const effect: IEffect = {
-    execute,
-    deps: new Set(),
-  };
-
-  execute();
-}
-
-function cleanUp(effect: IEffect) {
-  for (const subscribingEffects of effect.deps) {
-    subscribingEffects.delete(effect);
   }
 
-  effect.deps.clear();
+  private clearDependingStates() {
+    for (const dependingState of this.dependingStates) {
+      dependingState.removeSubscriberEffect(this);
+    }
+
+    this.dependingStates.clear();
+  }
+}
+
+export default function useEffect(callback: EffectCallBack) {
+  const effect = new Effect(callback);
+  effect.execute(); // First calls callback to init dependencies
 }
